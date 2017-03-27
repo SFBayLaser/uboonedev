@@ -180,6 +180,8 @@ private:
     // Monte Carlo information
     Int_t    fNumMcParticles;
     std::vector<Int_t>       fPDGCode;
+    std::vector<Float_t>     fMcXOffset;
+    std::vector<Float_t>     fMcT0;
     std::vector<Float_t>     fMcPartStartX;
     std::vector<Float_t>     fMcPartStartY;
     std::vector<Float_t>     fMcPartStartZ;
@@ -323,6 +325,8 @@ void PFParticleMcAna::beginJob()
     fAnaTree->Branch("NumMcParticles",       &fNumMcParticles,        "NumMcParticles/I");
     
     fPDGCode.resize(fMaxEntries, 0);
+    fMcXOffset.resize(fMaxEntries, 0.);
+    fMcT0.resize(fMaxEntries, 0.);
     fMcPartStartX.resize(fMaxEntries, 0.);
     fMcPartStartY.resize(fMaxEntries, 0.);
     fMcPartStartZ.resize(fMaxEntries, 0.);
@@ -349,6 +353,8 @@ void PFParticleMcAna::beginJob()
     fMcNeutrinoDaughter.resize(fMaxEntries, 0);
 
     fAnaTree->Branch("McPartPDGCode",            fPDGCode.data(),             "McPartPDGCode[NumMcParticles]/I");
+    fAnaTree->Branch("McXOffset",                fMcXOffset.data(),           "McXOffset[NumMcParticles]/F");
+    fAnaTree->Branch("McT0",                     fMcT0.data(),                "McT0[NumMcParticles]/F");
     fAnaTree->Branch("McPartStartX",             fMcPartStartX.data(),        "McPartStartX[NumMcParticles]/F");
     fAnaTree->Branch("McPartStartY",             fMcPartStartY.data(),        "McPartStartY[NumMcParticles]/F");
     fAnaTree->Branch("McPartStartZ",             fMcPartStartZ.data(),        "McPartStartZ[NumMcParticles]/F");
@@ -540,6 +546,8 @@ void PFParticleMcAna::PrepareEvent(const art::Event &evt, int numColumns)
     
     // Now clear the tuple variables too
     fPDGCode.assign(maxEntries, 0);
+    fMcXOffset.assign(maxEntries, 0.);
+    fMcT0.assign(maxEntries, 0.);
     fMcPartEndX.assign(maxEntries, 0.);
     fMcPartStartY.assign(maxEntries, 0.);
     fMcPartStartZ.assign(maxEntries, 0.);
@@ -886,8 +894,13 @@ void PFParticleMcAna::analyze(const art::Event& event)
         
         // The following is meant to get the correct offset for drawing the particle trajectory
         // In particular, the cosmic rays will not be correctly placed without this
-        double g4Ticks(fTimeService->TPCG4Time2Tick(particle->T())+fDetectorProperties->GetXTicksOffset(0,0,0)-fDetectorProperties->TriggerOffset());
+        //double trigOffset(fDetectorProperties->TriggerOffset());
+        //double xTicksOffset(fDetectorProperties->GetXTicksOffset(0,0,0));
+        double partOffset(fTimeService->TPCG4Time2Tick(particle->T()));
+        double g4Ticks(partOffset);
+        //double g4Ticks(fTimeService->TPCG4Time2Tick(particle->T())+fDetectorProperties->GetXTicksOffset(0,0,0)-fDetectorProperties->TriggerOffset());
         double xOffset(fDetectorProperties->ConvertTicksToX(g4Ticks, 0, 0, 0));
+        double mcT0(0.001*particle->Position().T());
         
         // Calculate the length of this mc particle inside the fiducial volume.
         TVector3 mcstart;
@@ -896,6 +909,9 @@ void PFParticleMcAna::analyze(const art::Event& event)
         TVector3 mcendmom;
         
         double mcTrackLen = length(*particle, xOffset, mcstart, mcend, mcstartmom, mcendmom);
+        
+//        mcstart = particle->Position().Vect();
+//        mcend   = particle->EndPosition().Vect();
         
         // Apparently it can happen that we completely miss the TPC
         if (mcTrackLen == 0.) continue;
@@ -1204,6 +1220,8 @@ void PFParticleMcAna::analyze(const art::Event& event)
         if (fNumMcParticles < fMaxEntries)
         {
             fPDGCode[fNumMcParticles]             = trackPDGCode;
+            fMcXOffset[fNumMcParticles]           = xOffset;
+            fMcT0[fNumMcParticles]                = mcT0;
             fMcPartStartX[fNumMcParticles]        = mcstart.X();
             fMcPartStartY[fNumMcParticles]        = mcstart.Y();
             fMcPartStartZ[fNumMcParticles]        = mcstart.Z();

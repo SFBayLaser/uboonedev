@@ -308,27 +308,30 @@ void TrackHitAna::analyze(const art::Event& event)
             // Get the necessary associations
             art::FindManyP<recob::SpacePoint> trackSpacePointAssns(trackHandle, event, fTrackProducerLabel);
             art::FindManyP<recob::Hit>        spacePointHitAssns(spacePointHandle, event, fTrackProducerLabel);
-
-            // loop through tracks again
-            for(size_t trackIdx = 0; trackIdx < trackHandle->size(); trackIdx++)
+            
+            if (trackSpacePointAssns.isValid())
             {
-                art::Ptr<recob::Track> track(trackHandle,trackIdx);
-
-                // Recover the associated hits
-                SpacePointAnalysis::SpacePointPtrVec trackSpacePointVec = trackSpacePointAssns.at(track.key());
-                SpacePointAnalysis::SpacePointHitMap spacePointHitMap;
-
-                // Go through space points
-                for(const auto& spacePoint : trackSpacePointVec)
+                // loop through tracks again
+                for(size_t trackIdx = 0; trackIdx < trackHandle->size(); trackIdx++)
                 {
-                    // recover hits associated to this space point
-                    SpacePointAnalysis::HitPtrVec spacePointHitVec = spacePointHitAssns.at(spacePoint.key());
+                    art::Ptr<recob::Track> track(trackHandle,trackIdx);
 
-                    spacePointHitMap.insert(std::pair<size_t,SpacePointAnalysis::HitPtrVec>(spacePoint.key(),spacePointHitVec));
+                    // Recover the associated hits
+                    SpacePointAnalysis::SpacePointPtrVec trackSpacePointVec = trackSpacePointAssns.at(track.key());
+                    SpacePointAnalysis::SpacePointHitMap spacePointHitMap;
+
+                    // Go through space points
+                    for(const auto& spacePoint : trackSpacePointVec)
+                    {
+                        // recover hits associated to this space point
+                        SpacePointAnalysis::HitPtrVec spacePointHitVec = spacePointHitAssns.at(spacePoint.key());
+
+                        spacePointHitMap.insert(std::pair<size_t,SpacePointAnalysis::HitPtrVec>(spacePoint.key(),spacePointHitVec));
+                    }
+
+                    // Fill hists
+                    fSpacePointAnalysisAlg.fillHistograms(trackSpacePointVec, spacePointHitMap);
                 }
-
-                // Fill hists
-                fSpacePointAnalysisAlg.fillHistograms(trackSpacePointVec, spacePointHitMap);
             }
         }
     }
