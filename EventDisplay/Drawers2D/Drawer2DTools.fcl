@@ -1,0 +1,11 @@
+# 2D Drawing tool definitions
+
+BEGIN_PROLOG
+
+draw2dwires:
+{
+    tool_type: DrawWire2D
+    plane:     2
+}
+
+END_PROLOG

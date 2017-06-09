@@ -1,0 +1,28 @@
+#
+# Set up the TEve based event display
+#
+
+#include "Drawer2DTools.fcl"
+
+BEGIN_PROLOG
+
+# Start with the event display service
+EventDisplayService: { }
+
+# Now define the analyzer module
+EventDisplay :
+{
+    module_type     : EventDisplay3D
+    genParticleTag  : "evtgen"
+    drawGenTracks   : true
+    drawHits        : true
+    prompt          : true
+    waitFor         : mouse
+    multipage       : true
+    plotFileName    : "plots.jpg"
+    orientation     : "landscape"
+    maxDisplay      : 999
+    WireDrawer      : @local::draw2dwires
+}
+
+END_PROLOG
