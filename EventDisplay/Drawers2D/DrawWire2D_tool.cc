@@ -15,8 +15,12 @@
 #include "larcore/Geometry/Geometry.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h" // raw::ChannelID_t
+#include "larevt/CalibrationDBI/Interface/DetPedestalService.h"
+#include "larevt/CalibrationDBI/Interface/DetPedestalProvider.h"
 
 #include "lardataobj/RecoBase/Wire.h"
+#include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/raw.h"
 
 #include "TEveManager.h"
 #include "TEveEventManager.h"
@@ -85,7 +89,7 @@ DrawWire2D::DrawWire2D(const fhicl::ParameterSet& pset)
     // What follows is initially taken from a root tutorial (qaudset.C)
     gStyle->SetPalette(1, 0);
     
-    fPalette  = new TEveRGBAPalette(0, 130);
+    fPalette  = new TEveRGBAPalette(-50, 200); // (0, 130);
     fFrameBox = new TEveFrameBox();
     
 //    fFrameBox->SetAAQuadXY(-10, -10, 0, 20, 20); //-100., -10., 0., 3420., 6410.);
@@ -187,7 +191,7 @@ void DrawWire2D::drawWire2D(const art::Event& event) const
 //    fEvtXYScene->DestroyElements();
 //    fEventManager->DestroyElements();
     
-    if (wireVecHandle->size() > 0)
+    if (!(wireVecHandle->size() > 0))
     {
         // Reset our quad object
         fQuadSet->Reset(TEveQuadSet::kQT_RectangleXY, kFALSE, wireVecHandle->size());
@@ -225,9 +229,9 @@ void DrawWire2D::drawWire2D(const art::Event& event) const
                 // Now loop through the ticks and draw the box for them
                 for(size_t tick = 0; tick < signal.size(); tick++)
                 {
-                    int adcVal = signal.at(tick) + 30;
+                    int adcVal = signal.at(tick);
                     
-                    adcVal = std::min(130,std::max(0,adcVal));
+                    adcVal = std::min(80,std::max(-20,adcVal));
                 
                     fQuadSet->AddQuad(wireNum, roiFirstBinTick + tick, 0., 1., 1.);
                     fQuadSet->QuadValue(adcVal);
@@ -236,6 +240,63 @@ void DrawWire2D::drawWire2D(const art::Event& event) const
                     
 //                    fQuadSet->QuadId(new TNamed(quadId.c_str(),"assigned name"));
                 }
+            }
+        }
+    }
+    
+    // Try the RawDigits
+    art::Handle< std::vector<raw::RawDigit> > rawDigitHandle;
+    event.getByLabel("digitfilter",rawDigitHandle);
+    
+    //    fEvtXYScene->DestroyElements();
+    //    fEventManager->DestroyElements();
+    
+    if (rawDigitHandle->size() > 0)
+    {
+        //get pedestal conditions
+        const lariov::DetPedestalProvider& pedestalRetrievalAlg = art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider();
+        
+        // Reset our quad object
+        fQuadSet->Reset(TEveQuadSet::kQT_RectangleXY, kFALSE, 6400*rawDigitHandle->size());
+        
+        for(size_t rdIter = 0; rdIter < rawDigitHandle->size(); ++rdIter)
+        {
+            // get the reference to the current raw::RawDigit
+            art::Ptr<raw::RawDigit> digitVec(rawDigitHandle, rdIter);
+            
+            raw::ChannelID_t channel = digitVec->Channel();
+            
+            std::vector<geo::WireID> wids     = fGeometry->ChannelToWire(channel);
+            geo::PlaneID::PlaneID_t  thePlane = wids[0].Plane;
+            geo::WireID::WireID_t    wireNum  = wids[0].Wire;
+            
+            if (thePlane != 2) continue;
+
+            size_t dataSize = digitVec->Samples();
+                
+            // vector holding uncompressed adc values
+            std::vector<short> rawadc(dataSize);
+            
+            // uncompress the data
+            raw::Uncompress(digitVec->ADCs(), rawadc, digitVec->Compression());
+            
+            // loop over all adc values and subtract the pedestal
+            // When we have a pedestal database, can provide the digit timestamp as the third argument of GetPedestalMean
+            float pedestal = pedestalRetrievalAlg.PedMean(channel);
+            
+            // Get the pedestal subtracted data, centered in the deconvolution vector
+            std::vector<float> rawAdcLessPedVec(dataSize);
+            
+            std::transform(rawadc.begin(),rawadc.end(),rawAdcLessPedVec.begin(),[pedestal](const short& adc){return std::round(float(adc) - pedestal);});
+            
+            for(size_t tick = 0; tick < rawAdcLessPedVec.size(); tick++)
+            {
+                int adcVal = rawAdcLessPedVec.at(tick);
+                
+                adcVal = std::min(200,std::max(-50,adcVal));
+                
+                fQuadSet->AddQuad(wireNum, tick, 0., 1., 1.);
+                fQuadSet->QuadValue(adcVal);
             }
         }
     }
