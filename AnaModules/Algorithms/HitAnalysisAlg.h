@@ -84,6 +84,13 @@ private:
     TProfile* fChargeVsHitNo[3];
     TProfile* fChargeVsHitNoS[3];
     
+    TH2D*     fSPHvsIdx[3];
+    TH2D*     fSWidVsIdx[3];
+    TH2D*     f1PPHvsWid[3];
+    TH2D*     fSPPHvsWid[3];
+    TH2D*     fSOPHvsWid[3];
+    TH2D*     fPHRatVsIdx[3];
+    
     // Useful services, keep copies for now (we can update during begin run periods)
     const geo::GeometryCore*           fGeometry;             ///< pointer to Geometry service
     const detinfo::DetectorProperties* fDetectorProperties;   ///< Detector properties service

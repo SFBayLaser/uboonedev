@@ -122,6 +122,30 @@ void HitAnalysisAlg::initializeHists(art::ServiceHandle<art::TFileService>& tfs,
     fBadWPulseHeight          = dir.make<TH1D>("BWPulseHeight", "PH (ADC)",  300,  0.,  150.);
     fBadWPulseHVsWidth        = dir.make<TH2D>("BWPHVsWidth",   ";PH;Width", 100,  0.,  100., 100,  0., 10.);
     fBadWHitsByWire           = dir.make<TH1D>("BWHitsByWire",  ";Wire #", fGeometry->Nwires(2), 0., fGeometry->Nwires(2));
+    
+    fSPHvsIdx[0]              = dir.make<TH2D>("SPHVsIdx0",     ";PH;Idx", 30,  0.,  30., 100,  0., 100.);
+    fSPHvsIdx[1]              = dir.make<TH2D>("SPHVsIdx1",     ";PH;Idx", 30,  0.,  30., 100,  0., 100.);
+    fSPHvsIdx[2]              = dir.make<TH2D>("SPHVsIdx2",     ";PH;Idx", 30,  0.,  30., 100,  0., 100.);
+    
+    fSWidVsIdx[0]             = dir.make<TH2D>("SWidsIdx0",     ";Width;Idx", 30,  0.,  30., 100,  0., 10.);
+    fSWidVsIdx[1]             = dir.make<TH2D>("SWidsIdx1",     ";Width;Idx", 30,  0.,  30., 100,  0., 10.);
+    fSWidVsIdx[2]             = dir.make<TH2D>("SWidsIdx2",     ";Width;Idx", 30,  0.,  30., 100,  0., 10.);
+    
+    f1PPHvsWid[0]             = dir.make<TH2D>("1PPHVsWid0",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    f1PPHvsWid[1]             = dir.make<TH2D>("1PPHVsWid1",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    f1PPHvsWid[2]             = dir.make<TH2D>("1PPHVsWid2",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    
+    fSPPHvsWid[0]             = dir.make<TH2D>("SPPHVsWid0",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    fSPPHvsWid[1]             = dir.make<TH2D>("SPPHVsWid1",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    fSPPHvsWid[2]             = dir.make<TH2D>("SPPHVsWid2",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    
+    fSOPHvsWid[0]             = dir.make<TH2D>("SOPHVsWid0",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    fSOPHvsWid[1]             = dir.make<TH2D>("SOPHVsWid1",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    fSOPHvsWid[2]             = dir.make<TH2D>("SOPHVsWid2",    ";PH;Width", 100,  0.,  100., 100,  0., 10.);
+    
+    fPHRatVsIdx[0]            = dir.make<TH2D>("PHRatVsIdx0",   ";PHRat;Idx", 30,  0.,  30., 51,  0., 1.02);
+    fPHRatVsIdx[1]            = dir.make<TH2D>("PHRatVsIdx1",   ";PHRat;Idx", 30,  0.,  30., 51,  0., 1.02);
+    fPHRatVsIdx[2]            = dir.make<TH2D>("PHRatVsIdx2",   ";PHRat;Idx", 30,  0.,  30., 51,  0., 1.02);
 
     return;
 }
@@ -173,6 +197,8 @@ void HitAnalysisAlg::fillHistograms(const HitPtrVec& hitPtrVec) const
     // Keep track of number of hits per view
     size_t nHitsPerView[] = {0,0,0};
     size_t negCount(0);
+    
+    std::vector<const recob::Hit*> hitSnippetVec;
     
     // Loop the hits and make some plots
     for(const auto& hitPtr : hitPtrVec)
@@ -231,6 +257,47 @@ void HitAnalysisAlg::fillHistograms(const HitPtrVec& hitPtrVec) const
         }
         else
             fPulseHeightMulti[view]->Fill(hitPH, 1.);
+        
+        // Look at hits on snippets
+        if (!hitSnippetVec.empty() && hitSnippetVec.back()->LocalIndex() >= hitPtr->LocalIndex())
+        {
+            // Only worried about multi hit snippets
+            if (hitSnippetVec.size() > 1)
+            {
+                // Sort in order of largest to smallest pulse height
+                std::sort(hitSnippetVec.begin(),hitSnippetVec.end(),[](const auto* left, const auto* right){return left->PeakAmplitude() > right->PeakAmplitude();});
+                
+                float maxPulseHeight = hitSnippetVec.front()->PeakAmplitude();
+                
+                for(size_t idx = 0; idx < hitSnippetVec.size(); idx++)
+                {
+                    float pulseHeight      = hitSnippetVec.at(idx)->PeakAmplitude();
+                    float pulseWid         = hitSnippetVec.at(idx)->RMS();
+                    float pulseHeightRatio = pulseHeight / maxPulseHeight;
+                    
+                    size_t view = hitSnippetVec.at(idx)->View();
+                    
+                    fSPHvsIdx[view]->Fill(idx, std::min(float(99.9),pulseHeight), 1.);
+                    fSWidVsIdx[view]->Fill(idx, std::min(float(9.99),pulseWid), 1.);
+                    fPHRatVsIdx[view]->Fill(idx, pulseHeightRatio, 1.);
+                    
+                    if (idx == 0) fSPPHvsWid[view]->Fill(std::min(float(99.9),pulseHeight), std::min(float(9.99),pulseWid), 1.);
+                    else          fSOPHvsWid[view]->Fill(std::min(float(99.9),pulseHeight), std::min(float(9.99),pulseWid), 1.);
+                }
+            }
+            else
+            {
+                float  pulseHeight = hitSnippetVec.front()->PeakAmplitude();
+                float  pulseWid    = hitSnippetVec.front()->RMS();
+                size_t view        = hitSnippetVec.front()->View();
+                
+                f1PPHvsWid[view]->Fill(std::min(float(99.9),pulseHeight), std::min(float(9.99),pulseWid), 1.);
+            }
+            
+            hitSnippetVec.clear();
+        }
+        
+        hitSnippetVec.push_back(hitPtr.get());
     }
     
     return;

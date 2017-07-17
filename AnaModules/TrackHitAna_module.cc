@@ -430,8 +430,9 @@ void TrackHitAna::analyze(const art::Event& event)
 
         HitAnalysis::HitPtrVec nonTrackHits;
 
-        std::set_difference(allHitVec.begin(),allHitVec.end(),fitTrackHits.begin(),fitTrackHits.end(),std::back_inserter(nonTrackHits));
-//        std::set_difference(allHitVec.begin(),allHitVec.end(),pfTrackHits.begin(),pfTrackHits.end(),std::back_inserter(nonTrackHits));
+//        std::set_difference(allHitVec.begin(),allHitVec.end(),fitTrackHits.begin(),fitTrackHits.end(),std::back_inserter(nonTrackHits));
+////        std::set_difference(allHitVec.begin(),allHitVec.end(),pfTrackHits.begin(),pfTrackHits.end(),std::back_inserter(nonTrackHits));
+        nonTrackHits = allHitVec;
 
         fAllHitsAnalysisAlg.fillHistograms(nonTrackHits);
         fAllHitsTreeAlg.fillTree(fEvent,nonTrackHits);
