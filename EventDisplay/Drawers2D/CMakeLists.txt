@@ -4,8 +4,9 @@ include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
 cet_enable_asserts()
 
 art_make( BASENAME_ONLY
-          TOOL_LIBRARIES  larcore_Geometry
+          TOOL_LIBRARIES  larcorealg_Geometry
                           lardataobj_RecoBase
+			  lardataobj_RawData
                           larcore_Geometry_Geometry_service
                           lardata_Utilities
                           ${ART_FRAMEWORK_CORE}

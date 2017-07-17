@@ -28,7 +28,7 @@
 #include <iterator>
 
 #include "larcore/Geometry/Geometry.h"
-#include "larcore/Geometry/geo.h"
+#include "larcorealg/Geometry/geo.h"
 
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/PCAxis.h"

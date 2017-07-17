@@ -6,7 +6,7 @@ art_make( BASENAME_ONLY
 			lardata_RecoObjects
 			lardata_ArtDataHelper
                         lardata_Utilities
-                        larcore_Geometry
+                        larcorealg_Geometry
 	  		larcore_Geometry_Geometry_service
 			lardata_DetectorInfoServices_DetectorPropertiesServiceStandard_service
 			larevt_Filters
