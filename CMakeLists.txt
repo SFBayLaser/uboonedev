@@ -58,8 +58,6 @@ find_ups_product( art             v1_08_00 )
 find_ups_product( cetbuildtools   v3_07_00 )
 find_ups_product( postgresql      v9_1_5 )
 
-cet_check_gcc()
-
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
 include(ArtMake)

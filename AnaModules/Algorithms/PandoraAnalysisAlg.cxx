@@ -115,9 +115,9 @@ void PandoraAnalysisAlg::reconfigure(fhicl::ParameterSet const & pset)
 {
     // Read parameters from the .fcl file. The names in the arguments
     // to p.get<TYPE> must match names in the .fcl file.
-    fHitProducerLabel        = pset.get< std::string >("HitModuleLabel",          "gauss");
-    fPFParticleProducerLabel = pset.get< std::string >("PFParticleProducerLabel", "cluster3d");
-    fTrackProducerLabel      = pset.get< std::string >("TrackProducerLabel",      "trackkalmanhit");
+    fHitProducerLabel        = pset.get< art::InputTag >("HitModuleLabel"); //,          art::InputTag("gauss"));
+    fPFParticleProducerLabel = pset.get< art::InputTag >("PFParticleProducerLabel"); //, art::InputTag("cluster3d"));
+    fTrackProducerLabel      = pset.get< art::InputTag >("TrackProducerLabel"); //,      art::InputTag("trackkalmanhit"));
 }
 
 //----------------------------------------------------------------------------

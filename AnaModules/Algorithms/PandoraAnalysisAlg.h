@@ -22,6 +22,8 @@
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "canvas/Persistency/Common/FindManyP.h"
+#include "canvas/Utilities/Exception.h"
+#include "canvas/Utilities/InputTag.h"
 #include "art/Framework/Principal/Event.h"
 #include "larcore/Geometry/Geometry.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
@@ -79,9 +81,9 @@ private:
     double projectedLength(const recob::Track* track) const;
         
     // The parameters we'll read from the .fcl file.
-    std::string fHitProducerLabel;
-    std::string fPFParticleProducerLabel;
-    std::string fTrackProducerLabel;
+    art::InputTag fHitProducerLabel;
+    art::InputTag fPFParticleProducerLabel;
+    art::InputTag fTrackProducerLabel;
     
     // Keep track of histograms
     std::vector<TH1D*>                  fTH1DVec;
