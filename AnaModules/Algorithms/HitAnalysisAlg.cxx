@@ -219,7 +219,8 @@ void HitAnalysisAlg::fillHistograms(const HitPtrVec& hitPtrVec) const
         
 //        if (view == 2 && (wire == 18 || wire == 527 || wire == 528)) continue;
         
-        if (charge < 0. || sumADC < 0. || hitPH < 0.)
+//        if (charge < 0. || sumADC < 0. || hitPH < 0.)
+        if (hitPH < 0.)
         {
             negCount++;
             std::cout << "Hit view: " << view << ", wire: " << wire << ", T: " << peakTime << ", PH: " << hitPH << ", charge: " << charge << ", sumADC: " << sumADC << std::endl;
